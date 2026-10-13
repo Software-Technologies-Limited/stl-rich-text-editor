@@ -14,7 +14,11 @@
         "source": "https://github.com/software-technologies-limited/stl-rich-text-editor"
     },
     "require": {"php": "^8.1"},
+    "suggest": {"illuminate/support": "Enables Laravel asset and configuration publishing."},
     "autoload": {"psr-4": {"Stl\\RichTextEditor\\": "src/"}},
-    "extra": {"branch-alias": {"dev-main": "3.0-dev"}},
+    "extra": {
+        "branch-alias": {"dev-main": "3.1-dev"},
+        "laravel": {"providers": ["Stl\\RichTextEditor\\Bridge\\Laravel\\RichTextEditorServiceProvider"]}
+    },
     "config": {"sort-packages": true}
 }

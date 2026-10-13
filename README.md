@@ -21,7 +21,8 @@ composer require software-technologies-limited/stl-rich-text-editor
 ```
 
 Copy `vendor/software-technologies-limited/stl-rich-text-editor/src/assets` into
-a publicly served directory such as `public/assets/stl-rich-text-editor`.
+`public/vendor/stl-rich-text-editor`, or in Laravel run
+`php artisan vendor:publish --tag=stl-rich-text-editor-assets`.
 
 ## Raw PHP
 
@@ -84,6 +85,26 @@ $editor = new Editor(
 The endpoint must accept `multipart/form-data` and return `{"url":"/path/image.webp"}`.
 Authentication, authorization, MIME inspection, size limits, safe filenames,
 storage, and generated URLs remain the application's responsibility.
+
+## Themes, localization, events, and extensions
+
+Pass `theme`, `labels`, and `sanitizer` through the editor options. Themes use
+shared `--stl-control-*` CSS tokens. The editor emits `stl:rte-ready` and
+`stl:rte-change` DOM events. Register first-party application commands before
+initialization:
+
+```js
+StlRichTextEditor.registerCommand('highlight', {
+    label: 'Highlight',
+    glyph: '★',
+    execute(editor) {
+        // Use editor.surface and the browser Selection/Range APIs.
+    }
+});
+```
+
+Include `highlight` in a custom toolbar. Sanitizer allowlists accept `tags`,
+`globalAttributes`, and per-tag `attributes` options.
 
 ## Laravel
 

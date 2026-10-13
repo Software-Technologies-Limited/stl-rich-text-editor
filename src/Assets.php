@@ -8,7 +8,7 @@ use Stl\RichTextEditor\Support\Html;
 
 final class Assets
 {
-    public function __construct(private readonly string $baseUrl = '/assets/stl-rich-text-editor')
+    public function __construct(private readonly string $baseUrl = '/vendor/stl-rich-text-editor')
     {
     }
 

@@ -1,5 +1,12 @@
 # Changelog
 
+## 3.1.0
+
+- Added custom command and toolbar-button registration.
+- Added configurable sanitizer allowlists, localized labels, lifecycle events,
+  light/dark themes, and shared CSS design tokens.
+- Added optional Laravel configuration and asset publishing.
+
 ## Unreleased
 
 - Adopted as `software-technologies-limited/stl-rich-text-editor`.

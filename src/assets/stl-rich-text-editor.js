@@ -19,6 +19,11 @@
         ul: '• List', ol: '1. List', quote: '❝', code: '</>', left: '≡', center: '≣', right: '≡',
         link: 'Link', image: 'Image', table: 'Table', clear: 'Clear', source: 'HTML', fullscreen: '⛶'
     };
+    var commands = new Map();
+
+    function emit(editor, name, detail) {
+        editor.root.dispatchEvent(new CustomEvent('stl:rte-' + name, {bubbles: true, detail: Object.assign({editor: editor}, detail || {})}));
+    }
 
     var allowedTags = new Set(['A', 'B', 'BLOCKQUOTE', 'BR', 'CODE', 'DEL', 'DIV', 'EM', 'FIGCAPTION',
         'FIGURE', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'HR', 'I', 'IMG', 'LI', 'OL', 'P', 'PRE',
@@ -37,17 +42,23 @@
         return '';
     }
 
-    function sanitize(html) {
+    function sanitize(html, rules) {
+        rules = rules || {};
+        var permittedTags = rules.tags ? new Set(rules.tags.map(function (tag) { return String(tag).toUpperCase(); })) : allowedTags;
+        var permittedGlobal = rules.globalAttributes ? new Set(rules.globalAttributes) : globalAttributes;
         var template = document.createElement('template');
         template.innerHTML = String(html || '');
         Array.from(template.content.querySelectorAll('*')).forEach(function (node) {
-            if (!allowedTags.has(node.tagName)) {
+            if (!permittedTags.has(node.tagName)) {
                 node.replaceWith.apply(node, Array.from(node.childNodes));
                 return;
             }
             Array.from(node.attributes).forEach(function (attribute) {
                 var name = attribute.name.toLowerCase();
-                var permitted = globalAttributes.has(name) || (tagAttributes[node.tagName] && tagAttributes[node.tagName].has(name));
+                var configured = rules.attributes && rules.attributes[node.tagName.toLowerCase()];
+                var permitted = permittedGlobal.has(name)
+                    || (configured && configured.indexOf(name) !== -1)
+                    || (!rules.attributes && tagAttributes[node.tagName] && tagAttributes[node.tagName].has(name));
                 if (!permitted || name.indexOf('on') === 0 || name === 'style') node.removeAttribute(attribute.name);
             });
             if (node.hasAttribute('href')) {
@@ -141,16 +152,24 @@
         this.surface = this.root.querySelector('.stl-rte-surface');
         this.status = this.root.querySelector('.stl-rte-status');
         this.options = options || {};
+        this.root.dataset.stlTheme = this.options.theme || 'light';
+        var editor = this;
+        this.clean = function (html) { return sanitize(html, editor.options.sanitizer); };
         this.history = [];
         this.historyIndex = -1;
         this.sourceMode = false;
-        this.surface.setAttribute('data-placeholder', this.options.placeholder || 'Start writing…');
-        this.surface.innerHTML = sanitize(this.source.value);
+        this.surface.setAttribute('data-placeholder', this.options.placeholder || this.label('placeholder', 'Start writing…'));
+        this.surface.innerHTML = this.clean(this.source.value);
         this.buildToolbar();
         this.bind();
         this.record(true);
         this.updateStatus();
+        emit(this, 'ready');
     }
+
+    Editor.prototype.label = function (name, fallback) {
+        return (this.options.labels && this.options.labels[name]) || labels[name] || fallback || name;
+    };
 
     Editor.prototype.tools = function () {
         if (Array.isArray(this.options.toolbar)) return this.options.toolbar;
@@ -169,18 +188,20 @@
             }
             if (tool === 'format') {
                 var select = document.createElement('select');
-                select.setAttribute('aria-label', 'Text format');
-                [['p', 'Paragraph'], ['h2', 'Heading 2'], ['h3', 'Heading 3'], ['h4', 'Heading 4'], ['pre', 'Preformatted']].forEach(function (item) {
+                select.setAttribute('aria-label', self.label('format', 'Text format'));
+                [['p', self.label('paragraph', 'Paragraph')], ['h2', self.label('heading2', 'Heading 2')], ['h3', self.label('heading3', 'Heading 3')], ['h4', self.label('heading4', 'Heading 4')], ['pre', self.label('preformatted', 'Preformatted')]].forEach(function (item) {
                     var option = document.createElement('option'); option.value = item[0]; option.textContent = item[1]; select.appendChild(option);
                 });
                 select.addEventListener('change', function () { self.act('format', select.value); select.value = 'p'; });
                 self.toolbar.appendChild(select);
                 return;
             }
-            if (!labels[tool]) return;
+            var custom = commands.get(tool);
+            if (!labels[tool] && !custom) return;
             var button = document.createElement('button');
-            button.type = 'button'; button.dataset.tool = tool; button.title = labels[tool];
-            button.setAttribute('aria-label', labels[tool]); button.textContent = glyphs[tool];
+            var label = self.label(tool, custom && custom.label);
+            button.type = 'button'; button.dataset.tool = tool; button.title = label;
+            button.setAttribute('aria-label', label); button.textContent = (custom && custom.glyph) || glyphs[tool] || label;
             if (['source', 'fullscreen'].indexOf(tool) !== -1) button.setAttribute('aria-pressed', 'false');
             button.addEventListener('mousedown', function (event) { event.preventDefault(); });
             button.addEventListener('click', function () { self.act(tool); });
@@ -192,14 +213,14 @@
         var self = this;
         var timer;
         this.surface.addEventListener('input', function () {
-            self.sync(); self.updateStatus(); clearTimeout(timer); timer = setTimeout(function () { self.record(false); }, 250);
+            self.sync(); self.updateStatus(); emit(self, 'change', {html: self.source.value}); clearTimeout(timer); timer = setTimeout(function () { self.record(false); }, 250);
         });
         this.surface.addEventListener('paste', function (event) {
             event.preventDefault();
             var html = event.clipboardData.getData('text/html');
             var text = event.clipboardData.getData('text/plain');
             var template = document.createElement('template');
-            template.innerHTML = html ? sanitize(html) : String(text).replace(/[&<>]/g, function (character) { return {'&':'&amp;','<':'&lt;','>':'&gt;'}[character]; }).replace(/\n/g, '<br>');
+            template.innerHTML = html ? self.clean(html) : String(text).replace(/[&<>]/g, function (character) { return {'&':'&amp;','<':'&lt;','>':'&gt;'}[character]; }).replace(/\n/g, '<br>');
             insertNode(self.surface, template.content);
             self.changed();
         });
@@ -209,7 +230,7 @@
     };
 
     Editor.prototype.sync = function () {
-        if (!this.sourceMode) this.source.value = sanitize(this.surface.innerHTML);
+        if (!this.sourceMode) this.source.value = this.clean(this.surface.innerHTML);
         this.source.dispatchEvent(new Event('change', {bubbles: true}));
     };
 
@@ -221,7 +242,7 @@
     };
 
     Editor.prototype.record = function (force) {
-        var html = sanitize(this.surface.innerHTML);
+        var html = this.clean(this.surface.innerHTML);
         if (!force && this.history[this.historyIndex] === html) return;
         this.history = this.history.slice(0, this.historyIndex + 1);
         this.history.push(html);
@@ -238,7 +259,7 @@
     Editor.prototype.updateStatus = function () {
         var text = (this.sourceMode ? this.source.value.replace(/<[^>]*>/g, ' ') : this.surface.textContent).trim();
         var words = text ? text.split(/\s+/).length : 0;
-        this.status.textContent = words + (words === 1 ? ' word' : ' words');
+        this.status.textContent = words + (words === 1 ? this.label('word', ' word') : this.label('words', ' words'));
     };
 
     Editor.prototype.list = function (tag) {
@@ -294,13 +315,14 @@
 
     Editor.prototype.toggleSource = function () {
         this.sourceMode = !this.sourceMode;
-        if (this.sourceMode) this.sync(); else { this.surface.innerHTML = sanitize(this.source.value); this.record(false); }
+        if (this.sourceMode) this.sync(); else { this.surface.innerHTML = this.clean(this.source.value); this.record(false); }
         this.root.classList.toggle('is-source', this.sourceMode);
         var button = this.toolbar.querySelector('[data-tool="source"]'); if (button) button.setAttribute('aria-pressed', String(this.sourceMode));
         (this.sourceMode ? this.source : this.surface).focus(); this.updateStatus();
     };
 
     Editor.prototype.act = function (tool, value) {
+        if (commands.has(tool)) { commands.get(tool).execute(this, value); this.changed(); return; }
         if (tool === 'undo') return this.restore(-1);
         if (tool === 'redo') return this.restore(1);
         if (tool === 'source') return this.toggleSource();
@@ -330,6 +352,8 @@
             source.stlRichTextEditor = new Editor(source, options || {});
             return source.stlRichTextEditor;
         },
-        sanitize: sanitize
+        sanitize: sanitize,
+        registerCommand: function (name, command) { commands.set(name, command); },
+        on: function (element, name, callback) { element.addEventListener('stl:rte-' + name, callback); return function () { element.removeEventListener('stl:rte-' + name, callback); }; }
     };
 }(window));
