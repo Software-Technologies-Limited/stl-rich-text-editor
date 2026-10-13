@@ -1,217 +1,149 @@
-CKEditor Widget for Yii2
-========================
+# STL Rich Text Editor
 
-[![Latest Version](https://img.shields.io/github/tag/2amigos/yii2-ckeditor-widget.svg?style=flat-square&label=release)](https://github.com/2amigos/yii2-ckeditor-widget/tags)
-[![Software License](https://img.shields.io/badge/license-BSD-brightgreen.svg?style=flat-square)](LICENSE.md)
-[![Build Status](https://img.shields.io/travis/2amigos/yii2-ckeditor-widget/master.svg?style=flat-square)](https://travis-ci.org/2amigos/yii2-ckeditor-widget)
-[![Coverage Status](https://img.shields.io/scrutinizer/coverage/g/2amigos/yii2-ckeditor-widget.svg?style=flat-square)](https://scrutinizer-ci.com/g/2amigos/yii2-ckeditor-widget/code-structure)
-[![Quality Score](https://img.shields.io/scrutinizer/g/2amigos/yii2-ckeditor-widget.svg?style=flat-square)](https://scrutinizer-ci.com/g/2amigos/yii2-ckeditor-widget)
-[![Total Downloads](https://img.shields.io/packagist/dt/2amigos/yii2-ckeditor-widget.svg?style=flat-square)](https://packagist.org/packages/2amigos/yii2-ckeditor-widget)
+STL Rich Text Editor is a standalone rich-text editor for PHP applications. It
+contains its own PHP renderer, vanilla JavaScript editor, styles, toolbar,
+sanitizer, history, and upload hooks. It does not require CKEditor, KCFinder,
+jQuery, npm, Laravel, Yii, Symfony, or any other runtime package.
 
-Renders a [CKEditor WYSIWYG text editor plugin](http://www.ckeditor.com) widget.
+This project continues the Git history of `2amigos/yii2-ckeditor-widget`, but
+version 3 is an independent implementation. It is not CKEditor and is not
+affiliated with or endorsed by CKSource or the original maintainers.
 
-Installation
-------------
-The preferred way to install this extension is through [composer](http://getcomposer.org/download/).
+## Requirements
 
-Either run
+- PHP 8.1 through 8.5
+- A modern browser
 
-```
-composer require 2amigos/yii2-ckeditor-widget
-```
-or add
+## Installation
 
-```json
-"2amigos/yii2-ckeditor-widget" : "~2.1"
+```bash
+composer require software-technologies-limited/stl-rich-text-editor
 ```
 
-to the require section of your application's `composer.json` file.
+Copy `vendor/software-technologies-limited/stl-rich-text-editor/src/assets` into
+a publicly served directory such as `public/assets/stl-rich-text-editor`.
 
-Skins & Plugins
----------------
-
-This widget works with default's `dev-full/stable` branch of CKEditor, with a set of plugins and skins. If you wish to
-configure a different skins or plugins that the one proposed, you will have to download them separately and configure
-the widget's `clientOptions` attribute accordingly.
-
-
-Usage
------
-The library comes with two widgets: `CKEditor` and `CKEditorInline`. One is for classic edition and the other for inline
-editing respectively.
-
-Using a model with a basic preset:
-
-```
-
-use dosamigos\ckeditor\CKEditor;
-
-
-<?= $form->field($model, 'text')->widget(CKEditor::className(), [
-        'options' => ['rows' => 6],
-        'preset' => 'basic'
-    ]) ?>
-```
-Using inline edition with basic preset:
-
-```
-
-use dosamigos\ckeditor\CKEditorInline;
-
-<?php CKEditorInline::begin(['preset' => 'basic']);?>
-    This text can be edited now :)
-<?php CKEditorInline::end();?>
-```
-
-How to add custom plugins
--------------------------
-This is the way to add custom plugins to the editor. Since version 2.0 we are working with the packagist version of the 
-CKEditor library, therefore we are required to use its configuration API in order to add external plugins. 
-
-Lets add the popular [Code Editor Plugin](http://ckeditor.com/addon/pbckcode) for example. This plugin would allow us to 
-add a button to our editor's toolbar so we can add code to the content we are editing. 
-
-Assuming you have downloaded the plugin and added to the root directory of your Yii2 site. I have it this way: 
-
-<pre>
-+ frontend 
-+ -- web 
-    + -- pbckcode 
-</pre>
-
-We can now add it to our CKEditor widget. For this example I am using `CKEditorInline` widget. One thing you notice on 
-this example is that we do not use the preset attribute; this is highly important as we want to add a customized toolbar to our 
-widget. No more talking, here is the code:
- 
-```php 
-<?php
- 
-use dosamigos\ckeditor\CKEditorInline;
-
-// First we need to tell CKEDITOR variable where is our external plugin
-$this->registerJs("CKEDITOR.plugins.addExternal('pbckcode', '/pbckcode/plugin.js', '');");
-
-// ... 
-// Using the plugin
-<?php CKEditorInline::begin(['preset' => 'custom', 'clientOptions' => [
-    'extraPlugins' => 'pbckcode',
-    'toolbarGroups' => [
-        ['name' => 'undo'],
-        ['name' => 'basicstyles', 'groups' => ['basicstyles', 'cleanup']],
-        ['name' => 'colors'],
-        ['name' => 'links', 'groups' => ['links', 'insert']],
-        ['name' => 'others', 'groups' => ['others', 'about']],
-        
-        ['name' => 'pbckcode'] // <--- OUR NEW PLUGIN YAY!
-    ]
-]]) ?>
-
-<p>
-    Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et
-    dolore magna aliqua. 
-</p>
-<?php CKEditorInline::end() ?>
-```
-
-Browse & Upload
----------------
-To browse and upload files, the [KCFinder](https://kcfinder.sunhater.com/) plugin is used, which is disabled by default.
-
-To enable it, just use `'kcfinder'=>true`.
-
-See this simple example code:
+## Raw PHP
 
 ```php
 <?php
-use dosamigos\ckeditor\CKEditor;
 
-echo $form->field($model, 'text')->widget(CKEditor::className(), [
-    'kcfinder' => true,
-]);
+use Stl\RichTextEditor\Assets;
+use Stl\RichTextEditor\Editor;
+
+$assets = new Assets();
+$editor = new Editor(
+    name: 'content',
+    value: $savedHtml,
+    preset: 'standard',
+    options: ['placeholder' => 'Write something useful…'],
+);
+?>
+
+<?= $assets->styles() ?>
+<?= $editor->render() ?>
+<?= $assets->scripts() ?>
+<?= $editor->script() ?>
 ```
 
-The upload folder name is `upload` in the root web directory by default.
+The editor synchronizes sanitized HTML into its named `<textarea>`, so ordinary
+form submission works without special server integration.
 
-You can set options for the `kcfOptions` parameter, and can find all KCFinder's options in this link: [https://kcfinder.sunhater.com/install](https://kcfinder.sunhater.com/install)
+## Presets
 
-For change upload directory or change some options you can see this advanced example code:
+- `basic`: undo, redo, bold, italic, links, and clear formatting
+- `standard`: headings, formatting, lists, quotes, links, source, and fullscreen
+- `full`: standard tools plus code blocks, alignment, images, and tables
+- `custom`: only tools supplied through the `toolbar` option
 
 ```php
-<?php
-use dosamigos\ckeditor\CKEditor;
+$editor = new Editor(
+    name: 'body',
+    preset: 'custom',
+    options: ['toolbar' => ['bold', 'italic', '|', 'link', 'source']],
+);
+```
 
-echo $form->field($model, 'text')->widget(CKEditor::className(), [
-    'kcfinder' => true,
-    'kcfOptions' => [
-        'uploadURL' => '@web/upload',
-        'uploadDir' => '@webroot/upload',
-        'access' => [  // @link http://kcfinder.sunhater.com/install#_access
-            'files' => [
-                'upload' => true,
-                'delete' => true,
-                'copy' => true,
-                'move' => true,
-                'rename' => true,
-            ],
-            'dirs' => [
-                'create' => true,
-                'delete' => true,
-                'rename' => true,
-            ],
-        ],
-        'types' => [  // @link http://kcfinder.sunhater.com/install#_types
-            'files' => [
-                'type' => '',
-            ],
-        ],
+## Image uploads
+
+Set an upload endpoint to replace the image URL prompt with a file picker:
+
+```php
+$editor = new Editor(
+    name: 'body',
+    preset: 'full',
+    options: [
+        'uploadUrl' => '/uploads/images',
+        'uploadField' => 'image',
+        'uploadHeaders' => ['X-CSRF-Token' => $csrfToken],
+        'uploadData' => ['context' => 'articles'],
     ],
-]);
+);
 ```
 
-About extra assets 
-------------------
-You maybe wonder why there is file `dosamigos-ckeditor.widget.js`. The reason is that due to the way Yii2 works with 
-forms and Cross-Site Request Forgery (csrf). CKEditor does not trigger the on change event nor collects the CSRF token 
-when using file uploads. 
+The endpoint must accept `multipart/form-data` and return `{"url":"/path/image.webp"}`.
+Authentication, authorization, MIME inspection, size limits, safe filenames,
+storage, and generated URLs remain the application's responsibility.
 
-The asset tackles both issues. 
+## Laravel
 
-Testing
--------
+Construct the objects in a controller, component, or view model and render them
+as intentional component HTML in Blade:
 
-To test the extension, is better to clone this repository on your computer. After, go to the extensions folder and do
-the following (assuming you have `composer` installed on your computer): 
-
-```bash 
-$ composer install --no-interaction --prefer-source --dev
-```
-Once all required libraries are installed then do: 
-
-```bash 
-$ vendor/bin/phpunit
+```blade
+{!! $assets->styles() !!}
+{!! $editor->render() !!}
+{!! $assets->scripts() !!}
+{!! $editor->script() !!}
 ```
 
-Further Information
--------------------
-Please, check the [CKEditor plugin site](http://www.ckeditor.com) documentation for further information about its configuration options.
+Read the submitted HTML through the ordinary request API.
 
-Contributing
-------------
+## Yii
 
-Please see [CONTRIBUTING](CONTRIBUTING.md) for details.
+The framework-neutral renderer works directly in a Yii view:
 
-Credits
--------
+```php
+$editor = new \Stl\RichTextEditor\Editor(
+    name: 'Post[content]',
+    value: (string) $model->content,
+    preset: 'full',
+);
 
-- [Antonio Ramirez](https://github.com/tonydspaniard)
-- [All Contributors](../../contributors)
+echo $editor->render();
+echo $editor->script();
+```
 
-License
--------
+Load `Assets` once in the layout or view. Yii is not installed or required.
 
-The BSD License (BSD). Please see [License File](LICENSE.md) for more information.
+## Security
 
+The browser sanitizer removes scripts, event handlers, inline styles, unsafe
+URLs, and unsupported elements before form synchronization. Client-side
+sanitization is not a security boundary. Applications must sanitize submitted
+HTML again on the server using rules appropriate to their threat model.
 
-> [![2amigOS!](http://www.gravatar.com/avatar/55363394d72945ff7ed312556ec041e0.png)](http://www.2amigos.us)  
-<i>Web development has never been so fun!</i>  
-[www.2amigos.us](http://www.2amigos.us)
+Upload endpoints must enforce authentication, authorization, MIME inspection,
+file-size limits, safe filenames, and non-executable storage.
+
+## Development checks
+
+```bash
+composer validate --strict
+if composer show --locked --name-only | grep -q .; then composer audit --locked; fi
+find src -name '*.php' -print0 | xargs -0 -n1 php -l
+node --check src/assets/stl-rich-text-editor.js
+```
+
+GitHub Actions runs these checks on PHP 8.1 through 8.5.
+
+## Credits
+
+- Antonio Ramirez, 2amigOS! Consulting Group, and contributors to the original
+  Yii CKEditor widget
+- Software Technologies Limited, developer and maintainer of the independent
+  standalone editor introduced in version 3
+
+## License
+
+BSD-3-Clause. See [LICENSE.md](LICENSE.md). Original notices are retained.

@@ -1,56 +1,20 @@
 {
-    "name": "2amigos/yii2-ckeditor-widget",
-    "description": "CKEditor widget for Yii2.",
-    "type": "yii2-extension",
-    "keywords": [
-        "2amigos",
-        "yii",
-        "yii2",
-        "yii 2",
-        "extension",
-        "widget",
-        "ckeditor"
-    ],
-    "homepage": "http://yiiwheels.com/extension/ckeditor-widget",
+    "name": "software-technologies-limited/stl-rich-text-editor",
+    "description": "A standalone, framework-agnostic rich text editor for PHP applications.",
+    "type": "library",
+    "keywords": ["software-technologies-limited", "stl", "php", "rich-text-editor", "wysiwyg", "laravel", "symfony", "yii", "editor"],
+    "homepage": "https://github.com/software-technologies-limited/stl-rich-text-editor",
     "license": "BSD-3-Clause",
-    "minimum-stability": "dev",
-    "prefer-stable": true,
     "authors": [
-        {
-            "name": "2amigOS! Consulting Group",
-            "email": "hola@2amigos.us",
-            "homepage": "http://2amigos.us",
-            "role": "Developer"
-        }
+        {"name": "Software Technologies Limited", "homepage": "https://github.com/software-technologies-limited", "role": "Maintainer"},
+        {"name": "2amigOS! Consulting Group", "homepage": "https://github.com/2amigos", "role": "Original project developer"}
     ],
     "support": {
-        "issues": "https://github.com/2amigos/yii2-ckeditor-widget/issues",
-        "source": "https://github.com/2amigos/yii2-ckeditor-widget"
+        "issues": "https://github.com/software-technologies-limited/stl-rich-text-editor/issues",
+        "source": "https://github.com/software-technologies-limited/stl-rich-text-editor"
     },
-    "require": {
-        "yiisoft/yii2": "^2.0",
-        "ckeditor/ckeditor": "^4.7 || dev-full/4.11.x",
-        "sunhater/kcfinder": "*"
-    },
-    "require-dev": {
-        "phpunit/phpunit": "4.*",
-        "roave/security-advisories": "dev-master"
-    },
-    "autoload": {
-        "psr-4": {
-            "dosamigos\\ckeditor\\": "src"
-        }
-    },
-    "config": {
-        "fxp-asset": {
-            "installer-paths": {
-                "npm-asset-library": "vendor/npm"
-            }
-        }
-    },
-    "extra": {
-        "branch-alias": {
-            "dev-master": "1.0-dev"
-        }
-    }
+    "require": {"php": "^8.1"},
+    "autoload": {"psr-4": {"Stl\\RichTextEditor\\": "src/"}},
+    "extra": {"branch-alias": {"dev-main": "3.0-dev"}},
+    "config": {"sort-packages": true}
 }
